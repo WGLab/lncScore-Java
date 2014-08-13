@@ -30,6 +30,7 @@ public class GTFManager {
     
     public void setFile(String file) {
         filename = file;
+        
     }
     
     public GTF read() throws FileNotFoundException, IOException {
