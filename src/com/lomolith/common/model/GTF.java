@@ -17,7 +17,7 @@ public class GTF {
     public List transcripts=new ArrayList();
 
     public boolean FILTER_SIZE=true;
-    public String reference="/home/mittens/Workspace/tade/hg19.fa";
+    public String reference="/home/jihongkim/workspace/tade/hg19.fa";
     
     public GTF(String name) {
         filename=name;
