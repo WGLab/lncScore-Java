@@ -19,8 +19,7 @@ class svm_train {
 		public void print(String s) {}
 	};
 
-	private static void exit_with_help()
-	{
+	private static void exit_with_help() {
 		System.out.print(
 		 "Usage: svm_train [options] training_set_file [model_file]\n"
 		+"options:\n"
