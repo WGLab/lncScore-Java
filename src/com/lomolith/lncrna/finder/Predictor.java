@@ -1,17 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package com.lomolith.lncrna.finder;
 
-/**
- *
- * @author mittens
- */
 public class Predictor {
-    import libsvm.*;
+import libsvm.*;
 import java.io.*;
 import java.util.*;
 
