@@ -11,7 +11,7 @@ package com.lomolith.lncrna.finder;
  * @author mittens
  */
 public class Predictor {
-    import libsvm.*;
+import libsvm.*;
 import java.io.*;
 import java.util.*;
 
