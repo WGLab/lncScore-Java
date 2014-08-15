@@ -1,12 +1,13 @@
 package com.lomolith.lncrna.finder;
 
-import libsvm.*;
+import com.lomolith.common.util.Converter;
 import java.io.*;
 import java.util.*;
+import libsvm.*;
 
 public class Predictor {
     private svm_parameter param;		// set by parse_command_line
-    private svm_problem prob;		// set by read_problem
+    private svm_problem prob;                   // set by read_problem
     private svm_model model;
     private String input_file_name;		// set by parse_command_line
     private String model_file_name;		// set by parse_command_line
@@ -83,7 +84,7 @@ public class Predictor {
         }
     }
 	
-    public void run(String argv[]) throws IOException {
+    public void run(String argv[]) throws Exception {
         parse_command_line(argv);
         read_problem();
         error_msg = svm.svm_check_parameter(prob,param);
@@ -100,25 +101,7 @@ public class Predictor {
         }
     }
 
-    public static void main(String argv[]) throws IOException {
-        Predictor t = new Predictor();
-        t.run(argv);
-    }
-
-    public static double atof(String s) {
-        double d = Double.valueOf(s).doubleValue();
-        if (Double.isNaN(d) || Double.isInfinite(d)) {
-            System.err.print("NaN or Infinity in input\n");
-            System.exit(1);
-        }
-        return(d);
-    }
-
-    public static int atoi(String s) {
-        return Integer.parseInt(s);
-    }
-
-    public void parse_command_line(String argv[]) {
+    public void parse_command_line(String argv[]) throws Exception {
         int i;
         svm_print_interface print_func = null;	// default printing to stdout
 
@@ -147,40 +130,40 @@ public class Predictor {
             if(++i>=argv.length) exit_with_help();
             switch(argv[i-1].charAt(1)) {
                 case 's':
-                    param.svm_type = atoi(argv[i]);
+                    param.svm_type = Converter.toInt(argv[i]);
                     break;
                 case 't':
-                    param.kernel_type = atoi(argv[i]);
+                    param.kernel_type = Converter.toInt(argv[i]);
                     break;
                 case 'd':
-                    param.degree = atoi(argv[i]);
+                    param.degree = Converter.toInt(argv[i]);
                     break;
                 case 'g':
-                    param.gamma = atof(argv[i]);
+                    param.gamma = Converter.toDouble(argv[i]);
                     break;
                 case 'r':
-                    param.coef0 = atof(argv[i]);
+                    param.coef0 = Converter.toDouble(argv[i]);
                     break;
                 case 'n':
-                    param.nu = atof(argv[i]);
+                    param.nu = Converter.toDouble(argv[i]);
                     break;
                 case 'm':
-                    param.cache_size = atof(argv[i]);
+                    param.cache_size = Converter.toDouble(argv[i]);
                     break;
                 case 'c':
-                    param.C = atof(argv[i]);
+                    param.C = Converter.toDouble(argv[i]);
                     break;
                 case 'e':
-                    param.eps = atof(argv[i]);
+                    param.eps = Converter.toDouble(argv[i]);
                     break;
                 case 'p':
-                    param.p = atof(argv[i]);
+                    param.p = Converter.toDouble(argv[i]);
                     break;
                 case 'h':
-                    param.shrinking = atoi(argv[i]);
+                    param.shrinking = Converter.toInt(argv[i]);
                     break;
                 case 'b':
-                    param.probability = atoi(argv[i]);
+                    param.probability = Converter.toInt(argv[i]);
                     break;
                 case 'q':
                     print_func = svm_print_null;
@@ -188,7 +171,7 @@ public class Predictor {
                     break;
                 case 'v':
                     cross_validation = 1;
-                    nr_fold = atoi(argv[i]);
+                    nr_fold = Converter.toInt(argv[i]);
                     if(nr_fold < 2) {
                         System.err.print("n-fold cross validation: n must >= 2\n");
                         exit_with_help();
@@ -208,8 +191,8 @@ public class Predictor {
                         System.arraycopy(old,0,param.weight,0,param.nr_weight-1);
                     }
 
-                    param.weight_label[param.nr_weight-1] = atoi(argv[i-1].substring(2));
-                    param.weight[param.nr_weight-1] = atof(argv[i]);
+                    param.weight_label[param.nr_weight-1] = Converter.toInt(argv[i-1].substring(2));
+                    param.weight[param.nr_weight-1] = Converter.toDouble(argv[i]);
                     break;
                 default:
                     System.err.print("Unknown option: " + argv[i-1] + "\n");
@@ -235,27 +218,26 @@ public class Predictor {
 
     // read in a problem (in svmlight format)
 
-    public void read_problem() throws IOException {
+    public void read_problem() throws Exception {
         BufferedReader fp = new BufferedReader(new FileReader(input_file_name));
         Vector<Double> vy = new Vector<Double>();
         Vector<svm_node[]> vx = new Vector<svm_node[]>();
-        int max_index = 0;
 
-        while(true) {
-            String line = fp.readLine();
-            if(line == null) break;
-
-            StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
-
-            vy.addElement(atof(st.nextToken()));
-            int m = st.countTokens()/2;
-            svm_node[] x = new svm_node[m];
-            for(int j=0;j<m;j++) {
+        String line=fp.readLine();
+        String idx[]=line.split("\t");
+        int max_index = idx.length;
+        
+        while((line=fp.readLine())!=null) {
+            String st[]=line.split("\t");
+//            StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
+//            vy.addElement(Converter.toDouble(st.nextToken()));
+            vy.addElement(Converter.toDouble(st[0]));
+            svm_node[] x = new svm_node[idx.length];
+            for(int j=0;j<x.length;j++) {
                 x[j] = new svm_node();
-                x[j].index = atoi(st.nextToken());
-                x[j].value = atof(st.nextToken());
+                x[j].index = Converter.toInt(j);
+                x[j].value = Converter.toDouble(st[j]);
             }
-            if(m>0) max_index = Math.max(max_index, x[m-1].index);
             vx.addElement(x);
         }
 
