@@ -12,6 +12,7 @@ import static org.junit.Assert.*;
  * @author mittens
  */
 public class PredictorTest {
+    Predictor p = new Predictor();
     
     public PredictorTest() {
     }
@@ -32,12 +33,34 @@ public class PredictorTest {
     public void tearDown() {
     }
 
-    @Test
-    public void test() {
-        Predictor p = new Predictor();
-        String argv[]={"-pk"};
+//    @Test
+    public void testParseCommandLine() {
+        String argv[]={"features.txt"};
         try {
             p.parse_command_line(argv);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+//    @Test
+    public void testReadProblem() {
+        String argv[]={"c:/workspace/ncRNA/features.txt"};
+        try {
+            p.parse_command_line(argv);
+            p.read_problem();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    @Test
+    public void testRun() {
+        String argv[]={"c:/workspace/ncRNA/featurelet.txt"};
+        try {
+            p.run(argv);
         }
         catch (Exception e) {
             e.printStackTrace();

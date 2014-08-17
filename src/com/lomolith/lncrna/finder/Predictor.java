@@ -88,7 +88,6 @@ public class Predictor {
         parse_command_line(argv);
         read_problem();
         error_msg = svm.svm_check_parameter(prob,param);
-
         if(error_msg != null){
             System.err.print("ERROR: "+error_msg+"\n");
             System.exit(1);
@@ -97,6 +96,7 @@ public class Predictor {
         if(cross_validation != 0) do_cross_validation();
         else {
             model = svm.svm_train(prob,param);
+System.out.println(model)            ;
             svm.svm_save_model(model_file_name,model);
         }
     }
@@ -123,7 +123,7 @@ public class Predictor {
         param.weight_label = new int[0];
         param.weight = new double[0];
         cross_validation = 0;
-
+        
         // parse options
         for(i=0;i<argv.length;i++) {
             if(argv[i].charAt(0) != '-') break;
@@ -218,7 +218,7 @@ public class Predictor {
 
     // read in a problem (in svmlight format)
 
-    public void read_problem() throws Exception {
+    public void read_problem() throws Exception {        
         BufferedReader fp = new BufferedReader(new FileReader(input_file_name));
         Vector<Double> vy = new Vector<Double>();
         Vector<svm_node[]> vx = new Vector<svm_node[]>();
@@ -231,13 +231,15 @@ public class Predictor {
             String st[]=line.split("\t");
 //            StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
 //            vy.addElement(Converter.toDouble(st.nextToken()));
-            vy.addElement(Converter.toDouble(st[0]));
-            svm_node[] x = new svm_node[idx.length];
-            for(int j=0;j<x.length;j++) {
+            vy.addElement(Converter.toDouble(st[2]));
+            svm_node[] x = new svm_node[idx.length+1];
+            for(int j=3;j<idx.length;j++) {
                 x[j] = new svm_node();
                 x[j].index = Converter.toInt(j);
                 x[j].value = Converter.toDouble(st[j]);
             }
+//            x[idx.length] = new svm_node();
+//            x[idx.length].index=-1;
             vx.addElement(x);
         }
 
