@@ -178,9 +178,17 @@ public class GTF {
         for (int i=0; i<transcripts.size(); i++) {
             Transcript t = (Transcript) transcripts.get(i);
 //            if (du.CONNECTION) t.sequence = du.getSeq(t.chr, t.start, t.end);
-            t.sequence = new String(f.getSequence("chr"+t.chr, (int)t.start, (int)(t.end-t.start+1)));
-            if (t.strand.equals("-")) t.sequence = new StringBuffer(t.sequence).reverse().toString();
-//System.out.println(t.chr+":"+t.start+"-"+t.end+"/"+i);            
+            byte[] temp_seq = f.getSequence("chr"+t.chr, (int)t.start, (int)(t.end-t.start+1));
+            if (temp_seq!=null) {
+                t.sequence = new String(temp_seq);
+                if (t.strand.equals("-")) t.sequence = new StringBuffer(t.sequence).reverse().toString();
+            }
         }
+        List filtered = new ArrayList();
+        for (int i=0; i<transcripts.size();i++) {
+            Transcript t = (Transcript) transcripts.get(i);
+            if (t.sequence!=null && !t.sequence.equals("")) filtered.add(t);
+        }
+        transcripts = filtered;
     }
 }

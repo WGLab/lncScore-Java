@@ -31,10 +31,15 @@ public class FastaReader {
     }
 
     public byte[] getSequence(String chromosome, int start, int length) throws IOException {
-        FastaIndex index=name2index.get(chromosome);
-        if(index==null) throw new IOException("Sequence \""+chromosome+"\" was not indexed");
-        if(io==null) io=new RandomAccessFile(index.getFile(), "r");
-        return index.getSequence(io, start, length);
+        try {
+            FastaIndex index=name2index.get(chromosome);
+            if(index==null) throw new IOException("Sequence \""+chromosome+"\" was not indexed");
+            if(io==null) io=new RandomAccessFile(index.getFile(), "r");
+            return index.getSequence(io, start, length);
+        }
+        catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public void close() throws IOException {

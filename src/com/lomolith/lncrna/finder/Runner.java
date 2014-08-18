@@ -172,7 +172,9 @@ public class Runner {
     }
     
     public static void generateTrainSet(String dir, String inputGTF, String refFasta, LncRNAFinder lncRNA, String inputSeq) throws IOException {
-        List trainset = lncRNA.getTrainSequences(dir+"/"+inputGTF, refFasta, false);
+        lncRNA = new LncRNAFinder(dir);
+//        List trainset = lncRNA.getTrainSequences(dir+"/"+inputGTF, refFasta, false);
+        List trainset = lncRNA.getTrainSequences(inputGTF, refFasta, false);
         FileWriter fw = new FileWriter(dir+"/"+inputSeq);
         FileWriter fw2 = new FileWriter(dir+"/"+inputSeq+".fa");
         BufferedWriter bw = new BufferedWriter(fw);
