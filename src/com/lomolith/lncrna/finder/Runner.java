@@ -4,6 +4,7 @@ import com.lomolith.common.model.Transcript;
 import com.lomolith.sequence.LetterPairSimilarity;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -24,6 +25,10 @@ public class Runner {
     // REMOVE DUPLICATES IN DATA
     // REMOVE OVERLAP IN TEST DATA
     
+    // Possible GUI filter option: Length
+    //                             ORF closed? exist? length?
+    
+    
     public static void main(String args[]) {
         String dir=".";
         String inputGTF="gencode.v19.lincRNA.gtf";
@@ -32,9 +37,9 @@ public class Runner {
         int subset=0, range=100, offset=6;
         String inputSeq="train.set";
         String output="output.txt";
+        String head_file="";
         
         LncRNAFinder lncRNA = new LncRNAFinder(dir);
-        boolean paired=true;
         boolean GET_SEQ=false;
         boolean GET_SIM=false;
         boolean GET_COUNT=false;
@@ -56,15 +61,33 @@ public class Runner {
                 if (args[i].equals("-o") && i<args.length-1) output = args[i+1];
                 if (args[i].equals("--subset") && i<args.length-1) subset = Integer.parseInt(args[i+1]);
                 if (args[i].equals("--libsvm")) FORMAT_LIBSVM=true;
-                if (args[i].equals("--offset")) offset = Integer.parseInt(args[i+1]);
+                if (args[i].equals("--offset") && i<args.length-1) offset = Integer.parseInt(args[i+1]);
+                if (args[i].equals("--header") && i<args.length-1) head_file = args[i+1];
                 if (args[i].equals("--range") && i<args.length-1) range = Integer.parseInt(args[i+1]);
             }
             
             if (GET_SEQ) generateTrainSet(dir, inputGTF, refFasta, lncRNA, inputSeq);
             else if (GET_COUNT || GET_FREQ) {
                 /// CHECK TRAINSET FIRST!!
+                Map feat = new HashMap();
+                if (!head_file.equals("") && (new File(dir+"/"+head_file)).exists()) {
+                    System.out.println("Importing exist features...");
+                    FileReader fr = new FileReader(dir+"/"+head_file);
+                    BufferedReader br = new BufferedReader(fr);
+                    String line=br.readLine();
+                    String cols[]=line.split("\t");
+                    offset=cols.length-1;
+                    while((line=br.readLine())!=null) {
+                        cols=line.split("\t");
+                        String out=cols[1];
+                        for (int i=2; i<cols.length; i++) out+="\t"+(i-1)+":"+cols[i];
+                        feat.put(cols[0],out);
+                    }
+                    br.close();
+                    fr.close();
+                }
+                
                 List trainset = readTrainSequence(dir, inputSeq);
-//                for (int i=subset*range; i<(subset+1)*range; i++) {
                 String nuc[]={"A","C","T","G"};
                 FileWriter fw = new FileWriter(dir+"/"+output);
                 BufferedWriter bw = new BufferedWriter(fw);
@@ -81,62 +104,57 @@ public class Runner {
                     
                 for (int i=0; i<trainset.size(); i++) {
                     Transcript tc1=(Transcript) trainset.get(i);
-                    System.out.println("Counting tri-nucleotides for "+tc1.id+" ("+(i+1)+"/"+trainset.size()+")...");
-                    String seq=tc1.sequence.toUpperCase();
-                    
-                    boolean start=false;
-                    if (seq.indexOf("ATG")!=-1) {start=true; seq=seq.substring(seq.indexOf("ATG")+3);}
+                    if (head_file.equals("") || feat.get(tc1.id)!=null) {
+                        System.out.println("Counting tri-nucleotides for "+tc1.id+" ("+(i+1)+"/"+trainset.size()+")...");
+                        String seq=tc1.sequence.toUpperCase();
 
-//                    int ochre=seq.indexOf("TAA");
-//                    int amber=seq.indexOf("TAG");
-//                    int opal_umber=seq.indexOf("TGA");
-//                    if (ochre!=-1 && amber==-1 && opal_umber==-1) seq=seq.substring(0,ochre);
-//                    else if (ochre==-1 && amber!=-1 && opal_umber==-1) seq=seq.substring(0,amber);
-//                    else if (ochre==-1 && amber==-1 && opal_umber!=-1) seq=seq.substring(0,opal_umber);
-//                    else if (ochre==-1 && amber!=-1 && opal_umber!=-1) seq=seq.substring(0,Math.min(amber, opal_umber));
-//                    else if (ochre!=-1 && amber==-1 && opal_umber!=-1) seq=seq.substring(0,Math.min(ochre, opal_umber));
-//                    else if (ochre!=-1 && amber!=-1 && opal_umber==-1) seq=seq.substring(0,Math.min(ochre, amber));
-//                    else if (ochre!=-1 && amber!=-1 && opal_umber!=-1) seq=seq.substring(0,Math.min(ochre, Math.min(amber, opal_umber)));
-                    Map cnt = new HashMap();
-                    boolean closed=false;
-                    int pos=0;                    
-                    int total_cnt=0;
-                    for (int j=0; j<seq.length()-3; j+=3) {
-                        String idx = seq.substring(j,j+3);
-                        if (idx.equals("TAA")||idx.equals("TAG")||idx.equals("TGA")) {closed=true; pos=j;}
-                        else {if (cnt.get(idx)==null) cnt.put(idx, "0");
-                            int c = Integer.parseInt(cnt.get(idx).toString())+1;
-                            cnt.put(idx, c);
-                            total_cnt++;
-                        }
-                    }
-//System.out.println(seq.substring(0,pos+3));
-                    if (!FORMAT_LIBSVM) {
-                        bw.write(tc1.id+"\t"+tc1.sequence.length()+"\t"+pos);
-                        if (start && closed) bw.write("\tYES");
-                        else if (start && !closed) bw.write("\tSTART");
-                        else if (!start && closed) bw.write("\tSTOP");
-                        else bw.write("\tNO");
-                    }
-                    int index=offset;
-                    bw.write(tc1.id+"\t"+(index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
+                        boolean start=false;
+                        if (seq.indexOf("ATG")!=-1) {start=true; seq=seq.substring(seq.indexOf("ATG")+3);}
 
-                    String single_freq=seq;                                     // Count only in ORF
-                    String remove_A=single_freq.replaceAll("A", "");
-                    String remove_T=remove_A.replaceAll("T", "");
-                    String remove_C=remove_T.replaceAll("C", "");
-                    String remove_G=remove_C.replaceAll("G", "");
-                    if (GET_COUNT) bw.write("\t"+((single_freq.length()-remove_A.length())/seq.length())+"\t"+((remove_A.length()-remove_T.length())/seq.length())+"\t"+(remove_T.length()-remove_C.length())+"\t"+(remove_C.length()-remove_G.length()));
-                    else bw.write("\t"+(index++)+":"+((double)(single_freq.length()-remove_A.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_A.length()-remove_T.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_T.length()-remove_C.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_C.length()-remove_G.length())/(double)seq.length()));
-                    
-                    for (int j1=0; j1<4; j1++)
-                        for (int j2=0; j2<4; j2++)
-                            for (int j3=0; j3<4; j3++) {
-                                String idx=nuc[j1]+nuc[j2]+nuc[j3];
-                                if (GET_COUNT) bw.write("\t"+(cnt.get(idx)==null?"0":cnt.get(idx)));
-                                else bw.write("\t"+(index++)+":"+(cnt.get(idx)==null?"0":(Double.parseDouble(cnt.get(idx).toString())/((double)total_cnt))));
+                        Map cnt = new HashMap();
+                        boolean closed=false;
+                        int pos=0;                    
+                        int total_cnt=0;
+                        for (int j=0; j<seq.length()-3; j+=3) {
+                            String idx = seq.substring(j,j+3);
+                            if (idx.equals("TAA")||idx.equals("TAG")||idx.equals("TGA")) {closed=true; pos=j;}
+                            else {if (cnt.get(idx)==null) cnt.put(idx, "0");
+                                int c = Integer.parseInt(cnt.get(idx).toString())+1;
+                                cnt.put(idx, c);
+                                total_cnt++;
                             }
-                    bw.write("\n");
+                        }
+                        int index=offset;
+                        if (!FORMAT_LIBSVM) {
+                            bw.write(tc1.id+"\t"+tc1.sequence.length()+"\t"+pos);
+                            if (start && closed) bw.write("\tYES");
+                            else if (start && !closed) bw.write("\tSTART");
+                            else if (!start && closed) bw.write("\tSTOP");
+                            else bw.write("\tNO");
+                            bw.write(tc1.id+"\t"+(index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
+                        }
+                        else {
+                            if (!head_file.equals("")) bw.write(feat.get(tc1.id).toString()+"\t");
+                            bw.write((index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
+                        }
+
+                        String single_freq=seq;                                     // Count only in ORF
+                        String remove_A=single_freq.replaceAll("A", "");
+                        String remove_T=remove_A.replaceAll("T", "");
+                        String remove_C=remove_T.replaceAll("C", "");
+                        String remove_G=remove_C.replaceAll("G", "");
+                        if (GET_COUNT) bw.write("\t"+((single_freq.length()-remove_A.length())/seq.length())+"\t"+((remove_A.length()-remove_T.length())/seq.length())+"\t"+(remove_T.length()-remove_C.length())+"\t"+(remove_C.length()-remove_G.length()));
+                        else bw.write("\t"+(index++)+":"+((double)(single_freq.length()-remove_A.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_A.length()-remove_T.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_T.length()-remove_C.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_C.length()-remove_G.length())/(double)seq.length()));
+
+                        for (int j1=0; j1<4; j1++)
+                            for (int j2=0; j2<4; j2++)
+                                for (int j3=0; j3<4; j3++) {
+                                    String idx=nuc[j1]+nuc[j2]+nuc[j3];
+                                    if (GET_COUNT) bw.write("\t"+(cnt.get(idx)==null?"0":cnt.get(idx)));
+                                    else bw.write("\t"+(index++)+":"+(cnt.get(idx)==null?"0":(Double.parseDouble(cnt.get(idx).toString())/((double)total_cnt))));
+                                }
+                        bw.write("\n");
+                    }
                 }
                 bw.close();
                 fw.close();
@@ -173,7 +191,6 @@ public class Runner {
     
     public static void generateTrainSet(String dir, String inputGTF, String refFasta, LncRNAFinder lncRNA, String inputSeq) throws IOException {
         lncRNA = new LncRNAFinder(dir);
-//        List trainset = lncRNA.getTrainSequences(dir+"/"+inputGTF, refFasta, false);
         List trainset = lncRNA.getTrainSequences(inputGTF, refFasta, false);
         FileWriter fw = new FileWriter(dir+"/"+inputSeq);
         FileWriter fw2 = new FileWriter(dir+"/"+inputSeq+".fa");
