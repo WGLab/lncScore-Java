@@ -38,12 +38,18 @@ public class Runner {
         String inputSeq="train.set";
         String output="output.txt";
         String head_file="";
+
+        String fileCDS="";
+        String fileMEF="";
+        String filePhastCon="";
+        String filelincRNA="";
         
         LncRNAFinder lncRNA = new LncRNAFinder(dir);
         boolean GET_SEQ=false;
         boolean GET_SIM=false;
         boolean GET_COUNT=false;
         boolean GET_FREQ=false;
+        boolean GET_INPUT=false;
         boolean FORMAT_LIBSVM=false;
         int length=300;
         try {
@@ -52,6 +58,7 @@ public class Runner {
                 if (args[i].equals("--similarity")) GET_SIM=true;                           // Build a similarity score set
                 if (args[i].equals("--count")) GET_COUNT=true;                           // Build a train set
                 if (args[i].equals("--freq")) GET_FREQ=true;
+                if (args[i].equals("--generate")) GET_INPUT=true;                           // Build a similarity score set
                 
                 if (args[i].equals("-i") && i<args.length-1) inputGTF = args[i+1];
                 if (args[i].equals("-d") && i<args.length-1) dir = args[i+1];
@@ -64,13 +71,65 @@ public class Runner {
                 if (args[i].equals("--offset") && i<args.length-1) offset = Integer.parseInt(args[i+1]);
                 if (args[i].equals("--header") && i<args.length-1) head_file = args[i+1];
                 if (args[i].equals("--range") && i<args.length-1) range = Integer.parseInt(args[i+1]);
+                
+                if (args[i].equals("--cds") && i<args.length-1) fileCDS = args[i+1];
+                if (args[i].equals("--phastcon") && i<args.length-1) filePhastCon = args[i+1];
+                if (args[i].equals("--mef") && i<args.length-1) fileMEF = args[i+1];
+                if (args[i].equals("--lincRNA") && i<args.length-1) filelincRNA = args[i+1];
             }
             
             if (GET_SEQ) generateTrainSet(dir, inputGTF, refFasta, lncRNA, inputSeq);
-            else if (GET_COUNT || GET_FREQ) {
+            else if (GET_COUNT || GET_FREQ || GET_INPUT) {
                 /// CHECK TRAINSET FIRST!!
                 Map feat = new HashMap();
-                if (!head_file.equals("") && (new File(dir+"/"+head_file)).exists()) {
+                if (GET_INPUT) {
+                    System.out.println("Reading lincRNA list...");
+                    FileReader fr = new FileReader(dir+"/"+filelincRNA);
+                    BufferedReader br = new BufferedReader(fr);
+                    String line="";
+                    while((line=br.readLine())!=null) {
+                        String cols[]=line.split("\t");
+                        feat.put(cols[0],cols[1]);
+                    }
+                    System.out.println("Importing coding potential...");
+                    fr = new FileReader(dir+"/"+fileCDS);
+                    br = new BufferedReader(fr);
+                    while((line=br.readLine())!=null) {
+                        String cols[]=line.split("\t");
+                        if (feat.get(cols[0])!=null) {
+                            String out=feat.get(cols[0]).toString()+"\t1:"+cols[5];
+                            feat.put(cols[0],out);
+                        }
+                    }
+                    System.out.println("Importing conservation score...");
+                    fr = new FileReader(dir+"/"+filePhastCon);
+                    br = new BufferedReader(fr);
+                    while((line=br.readLine())!=null) {
+                        String cols[]=line.split("\t");
+                        if (feat.get(cols[7])!=null) {
+                            String out=feat.get(cols[7]).toString()+"\t2:"+cols[1].substring(cols[1].indexOf("=")+1,cols[1].indexOf(";"))+"\t3:"+cols[1].substring(cols[1].lastIndexOf("=")+1);
+                            feat.put(cols[7],out);
+                        }
+                    }
+                    System.out.println("Importing minimal folding energy...");
+                    fr = new FileReader(dir+"/"+fileMEF);
+                    br = new BufferedReader(fr);
+                    while((line=br.readLine())!=null) {
+                        String id=line.trim().substring(1);
+                        line=br.readLine();
+                        if (line.startsWith("--")) line=br.readLine();
+                        line=line.trim().replaceAll("[()]", "");
+                        if (feat.get(id)!=null) {
+                            String out=feat.get(id).toString()+"\t4:"+line;
+                            feat.put(id,out);
+System.out.println(id+"\t"+out);                        
+                        }
+                    }
+                    br.close();
+                    fr.close();
+                    offset=5;
+                }
+                else if (!head_file.equals("") && (new File(dir+"/"+head_file)).exists()) {
                     System.out.println("Importing exist features...");
                     FileReader fr = new FileReader(dir+"/"+head_file);
                     BufferedReader br = new BufferedReader(fr);
@@ -134,7 +193,7 @@ public class Runner {
                             bw.write(tc1.id+"\t"+(index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
                         }
                         else {
-                            if (!head_file.equals("")) bw.write(feat.get(tc1.id).toString()+"\t");
+                            if (!head_file.equals("")||GET_INPUT) bw.write(feat.get(tc1.id).toString()+"\t");
                             bw.write((index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
                         }
 

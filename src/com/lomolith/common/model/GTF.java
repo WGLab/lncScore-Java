@@ -68,26 +68,28 @@ public class GTF {
     
     public void setTranscript(String line) {
         String[] cols=line.split("\t");
-        Transcript t = new Transcript();
-        t.chr=cols[0].toUpperCase().replaceAll("CHR","");
-        t.start=Long.parseLong(cols[3]);
-        t.end=Long.parseLong(cols[4]);
-        if (t.chr.indexOf("_")==-1) {
-            if ((t.end-t.start+1>200 && FILTER_SIZE) || !FILTER_SIZE) {
-                t.method=cols[1];
-                t.type=cols[2];
-                t.strand=cols[6].trim();
-                String[] desc=cols[8].split(";");
-                for (int i=0; i<desc.length; i++) {
-                    String v = desc[i].trim().substring(desc[i].trim().indexOf(" ")+1).replaceAll("\"","");
-                    if (desc[i].contains("gene_id")) t.gene=v;
-                    else if (desc[i].contains("transcript_id")) t.id=v;
-                    else if (desc[i].contains("FPKM")) t.FPKM=Float.parseFloat(v);
-                    else if (desc[i].contains("conf_hi")) t.conf_hi=Float.parseFloat(v);
-                    else if (desc[i].contains("conf_lo")) t.conf_lo=Float.parseFloat(v);
-                    else if (desc[i].contains("exon_number")) t.exon=Integer.parseInt(v);
+        if (cols[2].equals("gene")||cols[2].equals("transcript")) {
+            Transcript t = new Transcript();
+            t.chr=cols[0].toUpperCase().replaceAll("CHR","");
+            t.start=Long.parseLong(cols[3]);
+            t.end=Long.parseLong(cols[4]);
+            if (t.chr.indexOf("_")==-1) {
+                if ((t.end-t.start+1>200 && FILTER_SIZE) || !FILTER_SIZE) {
+                    t.method=cols[1];
+                    t.type=cols[2];
+                    t.strand=cols[6].trim();
+                    String[] desc=cols[8].split(";");
+                    for (int i=0; i<desc.length; i++) {
+                        String v = desc[i].trim().substring(desc[i].trim().indexOf(" ")+1).replaceAll("\"","");
+                        if (desc[i].contains("gene_id")) t.gene=v;
+                        else if (desc[i].contains("transcript_id")) t.id=v;
+                        else if (desc[i].contains("FPKM")) t.FPKM=Float.parseFloat(v);
+                        else if (desc[i].contains("conf_hi")) t.conf_hi=Float.parseFloat(v);
+                        else if (desc[i].contains("conf_lo")) t.conf_lo=Float.parseFloat(v);
+                        else if (desc[i].contains("exon_number")) t.exon=Integer.parseInt(v);
+                    }
+                    transcripts.add(t);
                 }
-                transcripts.add(t);
             }
         }
     }
