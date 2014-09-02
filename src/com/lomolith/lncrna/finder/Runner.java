@@ -127,9 +127,9 @@ public class Runner {
                                 if (out.indexOf("\t4:")!=-1) {
                                     double tmp = Double.parseDouble(line);
                                     double prev = Double.parseDouble(out.substring(out.indexOf("\t4:")+4));
-                                    if (prev<tmp) line=out.substring(out.indexOf("\t4:")+4);
+                                    if (prev>tmp) feat.put(id,out+"\t4:"+line);
                                 }
-                                feat.put(id,out+"\t4:"+line);
+                                else feat.put(id,out+"\t4:"+line);
                                 
                             }
                         }
