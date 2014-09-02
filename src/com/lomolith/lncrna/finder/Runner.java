@@ -120,8 +120,18 @@ public class Runner {
                         if (line.startsWith("--")) line=br.readLine();
                         line=line.trim().replaceAll("[()]", "");
                         if (feat.get(id)!=null) {
-                            String out=feat.get(id).toString()+"\t4:"+line;
-                            feat.put(id,out);
+                            String out=feat.get(id).toString();
+                            if (out.indexOf("\t2:")==-1) feat.remove(id);
+                            else {
+////////// MULTIPLE MEF                                
+                                if (out.indexOf("\t4:")!=-1) {
+                                    double tmp = Double.parseDouble(line);
+                                    double prev = Double.parseDouble(out.substring(out.indexOf("\t4:")+4));
+                                    if (prev<tmp) line=out.substring(out.indexOf("\t4:")+4);
+                                }
+                                feat.put(id,out+"\t4:"+line);
+                                
+                            }
                         }
                     }
                     br.close();
