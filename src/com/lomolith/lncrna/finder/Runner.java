@@ -115,22 +115,27 @@ public class Runner {
                     fr = new FileReader(dir+"/"+fileMEF);
                     br = new BufferedReader(fr);
                     while((line=br.readLine())!=null) {
-                        String id=line.trim().substring(1);
-                        line=br.readLine();
+                        String id="";
+                        if (id.startsWith(">")) {
+                            id=line.trim().substring(1);
+                            line=br.readLine();
+                        }
                         if (line.startsWith("--")) line=br.readLine();
                         line=line.trim().replaceAll("[()]", "");
                         if (feat.get(id)!=null) {
                             String out=feat.get(id).toString();
-                            if (out.indexOf("\t2:")==-1) feat.remove(id);
+                            if (out.indexOf("\t2:")==-1) {
+System.out.println(id+"//////"+out)                                ;
+                                feat.remove(id);
+                            }
                             else {
 ////////// MULTIPLE MEF                                
                                 if (out.indexOf("\t4:")!=-1) {
                                     double tmp = Double.parseDouble(line);
-                                    double prev = Double.parseDouble(out.substring(out.indexOf("\t4:")+4));
-                                    if (prev>tmp) feat.put(id,out+"\t4:"+line);
+                                    double prev = Double.parseDouble(out.substring(out.indexOf("4:")+2));
+                                    if (prev>tmp) feat.put(id,out.substring(out.indexOf("4:"))+"4:"+line);
                                 }
                                 else feat.put(id,out+"\t4:"+line);
-                                
                             }
                         }
                     }
@@ -205,6 +210,7 @@ public class Runner {
                         }
                         else {
                             if (!head_file.equals("")||GET_INPUT) {
+////////// Missing MEF                                
                                 if (feat.get(tc1.id)!=null) {
                                     bw.write(feat.get(tc1.id).toString()+"\t");
                                     bw.write((index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
