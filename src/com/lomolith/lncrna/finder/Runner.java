@@ -115,13 +115,28 @@ public class Runner {
                     fr = new FileReader(dir+"/"+fileMEF);
                     br = new BufferedReader(fr);
                     while((line=br.readLine())!=null) {
-                        String id=line.trim().substring(1);
-                        line=br.readLine();
+                        String id="";
+if (line.indexOf("ENST00000306732")!=-1) System.err.println(line);                        
+                        if (line.startsWith(">")) {
+                            id=line.trim().substring(1);
+                            line=br.readLine();
+                        }
+if (id.indexOf("ENST00000306732")!=-1) System.err.println(line);                        
                         if (line.startsWith("--")) line=br.readLine();
                         line=line.trim().replaceAll("[()]", "");
+if (id.indexOf("ENST00000306732")!=-1) System.err.println(line);                        
                         if (feat.get(id)!=null) {
-                            String out=feat.get(id).toString()+"\t4:"+line;
-                            feat.put(id,out);
+                            String out=feat.get(id).toString();
+                            if (out.indexOf("\t2:")==-1) feat.remove(id);
+                            else {
+////////// MULTIPLE MEF                                
+                                if (out.indexOf("\t4:")!=-1) {
+                                    double tmp = Double.parseDouble(line);
+                                    double prev = Double.parseDouble(out.substring(out.indexOf("4:")+2));
+                                    if (prev>tmp) feat.put(id,out.substring(out.indexOf("4:"))+"4:"+line);
+                                }
+                                else feat.put(id,out+"\t4:"+line);
+                            }
                         }
                     }
                     br.close();
@@ -144,7 +159,7 @@ public class Runner {
                     br.close();
                     fr.close();
                 }
-                
+System.err.println(feat.get("ENST00000306732.3"));
                 List trainset = readTrainSequence(dir, inputSeq);
                 String nuc[]={"A","C","T","G"};
                 FileWriter fw = new FileWriter(dir+"/"+output);
