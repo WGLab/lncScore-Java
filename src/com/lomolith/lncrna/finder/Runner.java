@@ -50,6 +50,8 @@ public class Runner {
         boolean GET_COUNT=false;
         boolean GET_FREQ=false;
         boolean GET_INPUT=false;
+        boolean CONVERT=false;
+        boolean FILLED=false;
         boolean FORMAT_LIBSVM=true;
         int length=300;
         try {
@@ -59,6 +61,8 @@ public class Runner {
                 if (args[i].equals("--count")) GET_COUNT=true;                           // Build a train set
                 if (args[i].equals("--freq")) GET_FREQ=true;
                 if (args[i].equals("--generate")) GET_INPUT=true;                           // Build a similarity score set
+                if (args[i].equals("--convert")) {CONVERT=true; FILLED=true;}                           // output to input logistic
+                if (args[i].equals("--convert0")) CONVERT=true;                           // output to input logistic with no filled missing
                 
                 if (args[i].equals("-i") && i<args.length-1) inputGTF = args[i+1];
                 if (args[i].equals("-d") && i<args.length-1) dir = args[i+1];
@@ -76,6 +80,33 @@ public class Runner {
                 if (args[i].equals("--phastcon") && i<args.length-1) filePhastCon = args[i+1];
                 if (args[i].equals("--mef") && i<args.length-1) fileMEF = args[i+1];
                 if (args[i].equals("--lincRNA") && i<args.length-1) filelincRNA = args[i+1];
+            }
+            
+            if (CONVERT) {
+                FileReader fr = new FileReader(dir+"/"+inputGTF);
+                BufferedReader br = new BufferedReader(fr);
+                FileWriter fw = new FileWriter(dir+"/"+output);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write("lncRNA\tCDS\tPhastCon\tLOD\tMEF\tLength\tORF_length\tA\tT\tC\tG");
+                String nuc[]={"A","C","T","G"};
+                for (int j1=0; j1<4; j1++)
+                    for (int j2=0; j2<4; j2++)
+                        for (int j3=0; j3<4; j3++) {
+                            String idx=nuc[j1]+nuc[j2]+nuc[j3];
+                            bw.write("\t"+idx);
+                        }
+                bw.write("\n");
+                String line="";
+                while((line=br.readLine())!=null) {
+                    if (line.indexOf("\t")==-1) line=line.replaceAll(" ","\t");
+                    String[] col=line.split("\t");
+                    
+                    
+                }
+                bw.close();
+                fw.close();
+                br.close();
+                fr.close();
             }
             
             if (GET_SEQ) generateTrainSet(dir, inputGTF, refFasta, lncRNA, inputSeq);
@@ -178,7 +209,7 @@ public class Runner {
                 FileWriter fw = new FileWriter(dir+"/"+output);
                 BufferedWriter bw = new BufferedWriter(fw);
                 if (!FORMAT_LIBSVM) {
-                    bw.write("ID\tLength\tORF length\tORF\tA\tT\tC\tG");
+                    bw.write("ID\tlncRNA\tCDS\tPhastCons\tLOD\tMEF\tLength\tORF length\tORF\tA\tT\tC\tG");
                     for (int j1=0; j1<4; j1++)
                         for (int j2=0; j2<4; j2++)
                             for (int j3=0; j3<4; j3++) {
