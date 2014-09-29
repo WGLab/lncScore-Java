@@ -97,8 +97,16 @@ public class Runner {
                     while((line=br.readLine())!=null) {
                         String cols[]=line.split("\t");
                         if (feat.get(cols[0])!=null) {
-                            String out=feat.get(cols[0]).toString()+"\t1:"+cols[5];
-                            feat.put(cols[0],out);
+                            String chk=feat.get(cols[0]).toString();
+                            if (chk.indexOf("\t1:")!=-1) {                      ////////// NOW TAKE MAX FOR DUPLICATES
+                                    double tmp = Double.parseDouble(cols[5]);
+                                    double prev = Double.parseDouble(chk.substring(chk.indexOf("1:")+2));
+                                    if (prev>tmp) feat.put(cols[0],chk.substring(0,chk.indexOf("1:"))+"1:"+cols[5]);
+                            }
+                            else {
+                                String out=feat.get(cols[0]).toString()+"\t1:"+cols[5];
+                                feat.put(cols[0],out);
+                            }
                         }
                     }
                     System.out.println("Importing conservation score...");
@@ -107,8 +115,17 @@ public class Runner {
                     while((line=br.readLine())!=null) {
                         String cols[]=line.split("\t");
                         if (feat.get(cols[7])!=null) {
-                            String out=feat.get(cols[7]).toString()+"\t2:"+cols[1].substring(cols[1].indexOf("=")+1,cols[1].indexOf(";"))+"\t3:"+cols[1].substring(cols[1].lastIndexOf("=")+1);
-                            feat.put(cols[7],out);
+                            String chk=feat.get(cols[7]).toString();
+                            if (chk.indexOf("\t2:")!=-1) {
+                                    double tmp = Double.parseDouble(cols[1].substring(cols[1].indexOf("=")+1,cols[1].indexOf(";")));
+                                    String chk2=chk.substring(chk.indexOf("2:")+2);
+                                    double prev = Double.parseDouble(chk2.substring(0,chk2.indexOf("\t")));
+                                    if (prev>tmp) feat.put(cols[7],chk.substring(0,chk.indexOf("2:"))+"2:"+cols[1].substring(cols[1].indexOf("=")+1,cols[1].indexOf(";"))+"\t3:"+cols[1].substring(cols[1].lastIndexOf("=")+1));
+                            }
+                            else {
+                                String out=feat.get(cols[7]).toString()+"\t2:"+cols[1].substring(cols[1].indexOf("=")+1,cols[1].indexOf(";"))+"\t3:"+cols[1].substring(cols[1].lastIndexOf("=")+1);
+                                feat.put(cols[7],out);
+                            }
                         }
                     }
                     System.out.println("Importing minimal folding energy...");
@@ -116,15 +133,12 @@ public class Runner {
                     br = new BufferedReader(fr);
                     while((line=br.readLine())!=null) {
                         String id="";
-if (line.indexOf("ENST00000306732")!=-1) System.err.println(line);                        
                         if (line.startsWith(">")) {
                             id=line.trim().substring(1);
                             line=br.readLine();
                         }
-if (id.indexOf("ENST00000306732")!=-1) System.err.println(line);                        
                         if (line.startsWith("--")) line=br.readLine();
                         line=line.trim().replaceAll("[()]", "");
-if (id.indexOf("ENST00000306732")!=-1) System.err.println(line);                        
                         if (feat.get(id)!=null) {
                             String out=feat.get(id).toString();
                             if (out.indexOf("\t2:")==-1) feat.remove(id);
@@ -133,10 +147,12 @@ if (id.indexOf("ENST00000306732")!=-1) System.err.println(line);
                                 if (out.indexOf("\t4:")!=-1) {
                                     double tmp = Double.parseDouble(line);
                                     double prev = Double.parseDouble(out.substring(out.indexOf("4:")+2));
-                                    if (prev>tmp) feat.put(id,out.substring(out.indexOf("4:"))+"4:"+line);
+                                    if (prev>tmp) feat.put(id,out.substring(0,out.indexOf("4:"))+"4:"+line.trim());
                                 }
-                                else feat.put(id,out+"\t4:"+line);
+                                else feat.put(id,out+"\t4:"+line.trim());
                             }
+                            Object out2=feat.get(id);
+                            String out3="";
                         }
                     }
                     br.close();
@@ -159,7 +175,6 @@ if (id.indexOf("ENST00000306732")!=-1) System.err.println(line);
                     br.close();
                     fr.close();
                 }
-System.err.println(feat.get("ENST00000306732.3"));
                 List trainset = readTrainSequence(dir, inputSeq);
                 String nuc[]={"A","C","T","G"};
                 FileWriter fw = new FileWriter(dir+"/"+output);
@@ -174,7 +189,6 @@ System.err.println(feat.get("ENST00000306732.3"));
                             }
                     bw.write("\n");
                 }
-                    
                 for (int i=0; i<trainset.size(); i++) {
                     Transcript tc1=(Transcript) trainset.get(i);
 //                    if (head_file.equals("") || feat.get(tc1.id)!=null) {
@@ -182,7 +196,6 @@ System.err.println(feat.get("ENST00000306732.3"));
 //                        System.out.println("Counting tri-nucleotides for "+tc1.id+" ("+(i+1)+"/"+trainset.size()+")...");
                         if (i%1000==1) System.out.print(".");
                         String seq=tc1.sequence.toUpperCase();
-
                         boolean start=false;
                         if (seq.indexOf("ATG")!=-1) {start=true; seq=seq.substring(seq.indexOf("ATG")+3);}
 
@@ -199,6 +212,7 @@ System.err.println(feat.get("ENST00000306732.3"));
                                 total_cnt++;
                             }
                         }
+if (pos!=0) {                        
                         int index=offset;
                         if (!FORMAT_LIBSVM) {
                             bw.write(tc1.id+"\t"+tc1.sequence.length()+"\t"+pos);
@@ -217,8 +231,7 @@ System.err.println(feat.get("ENST00000306732.3"));
                                 }
                             }
                         }
-
-                        String single_freq=seq;                                     // Count only in ORF
+                        String single_freq=seq;                                     // CURRENTLY count only in ORF
                         String remove_A=single_freq.replaceAll("A", "");
                         String remove_T=remove_A.replaceAll("T", "");
                         String remove_C=remove_T.replaceAll("C", "");
@@ -234,6 +247,7 @@ System.err.println(feat.get("ENST00000306732.3"));
                                     else bw.write("\t"+(index++)+":"+(cnt.get(idx)==null?"0":(Double.parseDouble(cnt.get(idx).toString())/((double)total_cnt))));
                                 }
                         bw.write("\n");
+}
                     }
                 }
                 System.out.println("");
