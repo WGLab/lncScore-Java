@@ -61,7 +61,7 @@ public class Runner {
                 if (args[i].equals("--count")) GET_COUNT=true;                           // Build a train set
                 if (args[i].equals("--freq")) GET_FREQ=true;
                 if (args[i].equals("--generate")) GET_INPUT=true;                           // Build a similarity score set
-                if (args[i].equals("--convert")) {CONVERT=true; FILLED=true;}                           // output to input logistic
+                if (args[i].equals("--convert")) {CONVERT=true; FILLED=true;}                           // output to input logistic === not implement yet
                 if (args[i].equals("--convert0")) CONVERT=true;                           // output to input logistic with no filled missing
                 
                 if (args[i].equals("-i") && i<args.length-1) inputGTF = args[i+1];
@@ -100,8 +100,19 @@ public class Runner {
                 while((line=br.readLine())!=null) {
                     if (line.indexOf("\t")==-1) line=line.replaceAll(" ","\t");
                     String[] col=line.split("\t");
-                    
-                    
+                    bw.write(col[0]);
+                    int ofs=1;
+                    for (int i=1; i<col.length; i++) {
+                        int pos=col[i].indexOf(":");
+                        int cmp=Integer.parseInt(col[i].substring(0,pos));
+                        while(ofs<cmp) {
+                            bw.write("\t"); 
+                            ofs++;
+                        }
+                        bw.write("\t"+col[i].substring(pos+1));
+                        ofs++;
+                    }
+                    bw.write("\n");
                 }
                 bw.close();
                 fw.close();
