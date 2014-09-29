@@ -141,8 +141,8 @@ public class Runner {
                         line=line.trim().replaceAll("[()]", "");
                         if (feat.get(id)!=null) {
                             String out=feat.get(id).toString();
-                            if (out.indexOf("\t2:")==-1) feat.remove(id);
-                            else {
+//                            if (out.indexOf("\t2:")==-1) feat.remove(id);     /////MISSING CDS INFO
+//                            else {
 ////////// MULTIPLE MEF                                
                                 if (out.indexOf("\t4:")!=-1) {
                                     double tmp = Double.parseDouble(line);
@@ -150,9 +150,7 @@ public class Runner {
                                     if (prev>tmp) feat.put(id,out.substring(0,out.indexOf("4:"))+"4:"+line.trim());
                                 }
                                 else feat.put(id,out+"\t4:"+line.trim());
-                            }
-                            Object out2=feat.get(id);
-                            String out3="";
+//                            }
                         }
                     }
                     br.close();
@@ -198,7 +196,6 @@ public class Runner {
                         String seq=tc1.sequence.toUpperCase();
                         boolean start=false;
                         if (seq.indexOf("ATG")!=-1) {start=true; seq=seq.substring(seq.indexOf("ATG")+3);}
-
                         Map cnt = new HashMap();
                         boolean closed=false;
                         int pos=0;                    
@@ -212,42 +209,43 @@ public class Runner {
                                 total_cnt++;
                             }
                         }
-if (pos!=0) {                        
-                        int index=offset;
-                        if (!FORMAT_LIBSVM) {
-                            bw.write(tc1.id+"\t"+tc1.sequence.length()+"\t"+pos);
-                            if (start && closed) bw.write("\tYES");
-                            else if (start && !closed) bw.write("\tSTART");
-                            else if (!start && closed) bw.write("\tSTOP");
-                            else bw.write("\tNO");
-                            bw.write(tc1.id+"\t"+(index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
-                        }
-                        else {
-                            if (!head_file.equals("")||GET_INPUT) {
-                                if (feat.get(tc1.id)!=null) {
-                                    bw.write(feat.get(tc1.id).toString()+"\t");
-                                    bw.write((index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
-                                    feat.remove(tc1.id);                        // Only uniq!!!
+                        if (seq.length()!=0 && start) pos=seq.length();
+                        if (pos!=0) {                        
+                            int index=offset;
+                            if (!FORMAT_LIBSVM) {
+                                bw.write(tc1.id+"\t"+tc1.sequence.length()+"\t"+pos);
+                                if (start && closed) bw.write("\tYES");
+                                else if (start && !closed) bw.write("\tSTART");
+                                else if (!start && closed) bw.write("\tSTOP");
+                                else bw.write("\tNO");
+                                bw.write(tc1.id+"\t"+(index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
+                            }
+                            else {
+                                if (!head_file.equals("")||GET_INPUT) {
+                                    if (feat.get(tc1.id)!=null) {
+                                        bw.write(feat.get(tc1.id).toString()+"\t");
+                                        bw.write((index++)+":"+tc1.sequence.length()+"\t"+(index++)+":"+pos); 
+                                        feat.remove(tc1.id);                        // Only uniq!!!
+                                    }
                                 }
                             }
-                        }
-                        String single_freq=seq;                                     // CURRENTLY count only in ORF
-                        String remove_A=single_freq.replaceAll("A", "");
-                        String remove_T=remove_A.replaceAll("T", "");
-                        String remove_C=remove_T.replaceAll("C", "");
-                        String remove_G=remove_C.replaceAll("G", "");
-                        if (GET_COUNT) bw.write("\t"+((single_freq.length()-remove_A.length())/seq.length())+"\t"+((remove_A.length()-remove_T.length())/seq.length())+"\t"+(remove_T.length()-remove_C.length())+"\t"+(remove_C.length()-remove_G.length()));
-                        else bw.write("\t"+(index++)+":"+((double)(single_freq.length()-remove_A.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_A.length()-remove_T.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_T.length()-remove_C.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_C.length()-remove_G.length())/(double)seq.length()));
+                            String single_freq=seq;                                     // CURRENTLY count only in ORF
+                            String remove_A=single_freq.replaceAll("A", "");
+                            String remove_T=remove_A.replaceAll("T", "");
+                            String remove_C=remove_T.replaceAll("C", "");
+                            String remove_G=remove_C.replaceAll("G", "");
+                            if (GET_COUNT) bw.write("\t"+((single_freq.length()-remove_A.length())/seq.length())+"\t"+((remove_A.length()-remove_T.length())/seq.length())+"\t"+(remove_T.length()-remove_C.length())+"\t"+(remove_C.length()-remove_G.length()));
+                            else bw.write("\t"+(index++)+":"+((double)(single_freq.length()-remove_A.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_A.length()-remove_T.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_T.length()-remove_C.length())/(double)seq.length())+"\t"+(index++)+":"+((double)(remove_C.length()-remove_G.length())/(double)seq.length()));
 
-                        for (int j1=0; j1<4; j1++)
-                            for (int j2=0; j2<4; j2++)
-                                for (int j3=0; j3<4; j3++) {
-                                    String idx=nuc[j1]+nuc[j2]+nuc[j3];
-                                    if (GET_COUNT) bw.write("\t"+(cnt.get(idx)==null?"0":cnt.get(idx)));
-                                    else bw.write("\t"+(index++)+":"+(cnt.get(idx)==null?"0":(Double.parseDouble(cnt.get(idx).toString())/((double)total_cnt))));
-                                }
-                        bw.write("\n");
-}
+                            for (int j1=0; j1<4; j1++)
+                                for (int j2=0; j2<4; j2++)
+                                    for (int j3=0; j3<4; j3++) {
+                                        String idx=nuc[j1]+nuc[j2]+nuc[j3];
+                                        if (GET_COUNT) bw.write("\t"+(cnt.get(idx)==null?"0":cnt.get(idx)));
+                                        else bw.write("\t"+(index++)+":"+(cnt.get(idx)==null?"0":(Double.parseDouble(cnt.get(idx).toString())/((double)total_cnt))));
+                                    }
+                            bw.write("\n");
+                        }
                     }
                 }
                 System.out.println("");
