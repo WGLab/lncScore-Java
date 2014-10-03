@@ -1,5 +1,7 @@
 package com.lomolith.lncrna.finder;
 
+import com.lomolith.annotation.GTFManager;
+import com.lomolith.common.model.GTF;
 import com.lomolith.common.model.Transcript;
 import com.lomolith.sequence.LetterPairSimilarity;
 import java.io.BufferedReader;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -53,6 +56,9 @@ public class Runner {
         boolean CONVERT=false;
         boolean FILLED=false;
         boolean FORMAT_LIBSVM=true;
+        
+boolean SIZE=false;        
+        
         int length=300;
         try {
             for (int i=0; i<args.length; i++) {
@@ -63,6 +69,8 @@ public class Runner {
                 if (args[i].equals("--generate")) GET_INPUT=true;                           // Build a similarity score set
                 if (args[i].equals("--convert")) {CONVERT=true; FILLED=true;}                           // output to input logistic === not implement yet
                 if (args[i].equals("--convert0")) CONVERT=true;                           // output to input logistic with no filled missing
+                
+if (args[i].equals("--size")) SIZE=true;                           // Temporary size-measuring parameter.
                 
                 if (args[i].equals("-i") && i<args.length-1) inputGTF = args[i+1];
                 if (args[i].equals("-d") && i<args.length-1) dir = args[i+1];
@@ -82,6 +90,43 @@ public class Runner {
                 if (args[i].equals("--lincRNA") && i<args.length-1) filelincRNA = args[i+1];
             }
             
+if (SIZE) {
+        System.out.print("Reading annotation: "+inputGTF+"...");
+        FileReader fr = new FileReader(dir+"/"+inputGTF);
+        BufferedReader br = new BufferedReader(fr);
+        String line="";
+        Map size = new HashMap();
+        int cnt=0;
+        while((line=br.readLine())!=null) {
+            String[] cols=line.split("\t");
+            cnt++;
+            if (cnt%100==0) System.out.print(".");
+            if (!line.startsWith("#") && cols[2].equals("exon")) {
+                long start=Long.parseLong(cols[3]);
+                long end=Long.parseLong(cols[4]);
+                String[] desc=cols[8].split(";");
+                for (int i=0; i<desc.length; i++) {
+                    String v = desc[i].trim().substring(desc[i].trim().indexOf(" ")+1).replaceAll("\"","");
+                    if (desc[i].contains("transcript_id")) {
+                        if (size.get(v)==null) size.put(v,0);
+                        long total = Long.parseLong(size.get(v).toString());
+                        size.put(v, (total+end-start+1));
+                        break;
+                    }
+                }
+            }
+        }
+        System.out.println();
+        FileWriter fw = new FileWriter(dir+"/"+output);
+        BufferedWriter bw = new BufferedWriter(fw);
+        bw.write("Transcript_ID\tTranscript_length\n");
+        Set keys = size.keySet();
+        for (Object k: keys) {
+            bw.write(k+"\t"+size.get(k)+"\n");
+        }
+        bw.close();
+        fw.close();
+}
             if (CONVERT) {
                 FileReader fr = new FileReader(dir+"/"+inputGTF);
                 BufferedReader br = new BufferedReader(fr);

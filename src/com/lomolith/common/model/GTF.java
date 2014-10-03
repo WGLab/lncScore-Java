@@ -66,7 +66,7 @@ public class GTF {
         return returnValue;
     }
     
-    public void setTranscript(String line) {
+    public void setTranscript(String line) {                                    // Currently, it ignores duplicates of transcript ID.
         String[] cols=line.split("\t");
         if (cols[2].equals("gene")||cols[2].equals("transcript")) {
             Transcript t = new Transcript();
@@ -89,6 +89,24 @@ public class GTF {
                         else if (desc[i].contains("exon_number")) t.exon=Integer.parseInt(v);
                     }
                     transcripts.add(t);
+                }
+            }
+        }
+        else if (cols[2].equals("exon")) {                                      // It assume every exons should be appeared after apearance of transcripts.
+            long start=Long.parseLong(cols[3]);
+            long end=Long.parseLong(cols[4]);
+            String[] desc=cols[8].split(";");
+            for (int i=0; i<desc.length; i++) {
+                String v = desc[i].trim().substring(desc[i].trim().indexOf(" ")+1).replaceAll("\"","");
+                if (desc[i].contains("transcript_id")) {
+                    for (int c=0; c<transcripts.size(); c++) {
+                        Transcript t = (Transcript) transcripts.get(c);
+                        if (t.id.equals(v)) {
+                            t.size+=end-start+1;
+                            break;
+                        }
+                    }
+                    break;
                 }
             }
         }

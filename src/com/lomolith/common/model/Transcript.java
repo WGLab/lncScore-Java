@@ -22,6 +22,7 @@ public class Transcript {
     public String chr;
     public long start;
     public long end;
+    public long size;
     public int exon;
     public String sequence;
     public String orf_seq;
