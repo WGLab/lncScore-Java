@@ -66,28 +66,48 @@ public class GTF {
         return returnValue;
     }
     
-    public void setTranscript(String line) {
+    public void setTranscript(String line) {                                    // Currently, it ignores duplicates of transcript ID.
         String[] cols=line.split("\t");
-        Transcript t = new Transcript();
-        t.chr=cols[0].toUpperCase().replaceAll("CHR","");
-        t.start=Long.parseLong(cols[3]);
-        t.end=Long.parseLong(cols[4]);
-        if (t.chr.indexOf("_")==-1) {
-            if ((t.end-t.start+1>200 && FILTER_SIZE) || !FILTER_SIZE) {
-                t.method=cols[1];
-                t.type=cols[2];
-                t.strand=cols[6].trim();
-                String[] desc=cols[8].split(";");
-                for (int i=0; i<desc.length; i++) {
-                    String v = desc[i].trim().substring(desc[i].trim().indexOf(" ")+1).replaceAll("\"","");
-                    if (desc[i].contains("gene_id")) t.gene=v;
-                    else if (desc[i].contains("transcript_id")) t.id=v;
-                    else if (desc[i].contains("FPKM")) t.FPKM=Float.parseFloat(v);
-                    else if (desc[i].contains("conf_hi")) t.conf_hi=Float.parseFloat(v);
-                    else if (desc[i].contains("conf_lo")) t.conf_lo=Float.parseFloat(v);
-                    else if (desc[i].contains("exon_number")) t.exon=Integer.parseInt(v);
+        if (cols[2].equals("gene")||cols[2].equals("transcript")) {
+            Transcript t = new Transcript();
+            t.chr=cols[0].toUpperCase().replaceAll("CHR","");
+            t.start=Long.parseLong(cols[3]);
+            t.end=Long.parseLong(cols[4]);
+            if (t.chr.indexOf("_")==-1) {
+                if ((t.end-t.start+1>200 && FILTER_SIZE) || !FILTER_SIZE) {
+                    t.method=cols[1];
+                    t.type=cols[2];
+                    t.strand=cols[6].trim();
+                    String[] desc=cols[8].split(";");
+                    for (int i=0; i<desc.length; i++) {
+                        String v = desc[i].trim().substring(desc[i].trim().indexOf(" ")+1).replaceAll("\"","");
+                        if (desc[i].contains("gene_id")) t.gene=v;
+                        else if (desc[i].contains("transcript_id")) t.id=v;
+                        else if (desc[i].contains("FPKM")) t.FPKM=Float.parseFloat(v);
+                        else if (desc[i].contains("conf_hi")) t.conf_hi=Float.parseFloat(v);
+                        else if (desc[i].contains("conf_lo")) t.conf_lo=Float.parseFloat(v);
+                        else if (desc[i].contains("exon_number")) t.exon=Integer.parseInt(v);
+                    }
+                    transcripts.add(t);
                 }
-                transcripts.add(t);
+            }
+        }
+        else if (cols[2].equals("exon")) {                                      // It assume every exons should be appeared after apearance of transcripts.
+            long start=Long.parseLong(cols[3]);
+            long end=Long.parseLong(cols[4]);
+            String[] desc=cols[8].split(";");
+            for (int i=0; i<desc.length; i++) {
+                String v = desc[i].trim().substring(desc[i].trim().indexOf(" ")+1).replaceAll("\"","");
+                if (desc[i].contains("transcript_id")) {
+                    for (int c=0; c<transcripts.size(); c++) {
+                        Transcript t = (Transcript) transcripts.get(c);
+                        if (t.id.equals(v)) {
+                            t.size+=end-start+1;
+                            break;
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
@@ -178,9 +198,17 @@ public class GTF {
         for (int i=0; i<transcripts.size(); i++) {
             Transcript t = (Transcript) transcripts.get(i);
 //            if (du.CONNECTION) t.sequence = du.getSeq(t.chr, t.start, t.end);
-            t.sequence = new String(f.getSequence("chr"+t.chr, (int)t.start, (int)(t.end-t.start+1)));
-            if (t.strand.equals("-")) t.sequence = new StringBuffer(t.sequence).reverse().toString();
-//System.out.println(t.chr+":"+t.start+"-"+t.end+"/"+i);            
+            byte[] temp_seq = f.getSequence("chr"+t.chr, (int)t.start, (int)(t.end-t.start+1));
+            if (temp_seq!=null) {
+                t.sequence = new String(temp_seq);
+                if (t.strand.equals("-")) t.sequence = new StringBuffer(t.sequence).reverse().toString();
+            }
         }
+        List filtered = new ArrayList();
+        for (int i=0; i<transcripts.size();i++) {
+            Transcript t = (Transcript) transcripts.get(i);
+            if (t.sequence!=null && !t.sequence.equals("")) filtered.add(t);
+        }
+        transcripts = filtered;
     }
 }
