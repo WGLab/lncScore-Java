@@ -276,9 +276,7 @@ if (SIZE) {
                 }
                 for (int i=0; i<trainset.size(); i++) {
                     Transcript tc1=(Transcript) trainset.get(i);
-//                    if (head_file.equals("") || feat.get(tc1.id)!=null) {
                     if (feat.get(tc1.id)!=null) {
-//                        System.out.println("Counting tri-nucleotides for "+tc1.id+" ("+(i+1)+"/"+trainset.size()+")...");
                         if (i%1000==1) System.out.print(".");
                         String seq=tc1.sequence.toUpperCase();
                         boolean start=false;
