@@ -230,7 +230,8 @@ if (SIZE) {
                             String out=feat.get(id).toString();
 //                            if (out.indexOf("\t2:")==-1) feat.remove(id);     /////MISSING CDS INFO
 //                            else {
-////////// MULTIPLE MEF                                
+////////// MULTIPLE MEF  
+                            ///// ADD test comment
                                 if (out.indexOf("\t4:")!=-1) {
                                     double tmp = Double.parseDouble(line);
                                     double prev = Double.parseDouble(out.substring(out.indexOf("4:")+2));
