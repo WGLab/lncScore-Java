@@ -19,6 +19,7 @@ import java.util.List;
 public class LncRNAFinder {
 
     private String file="transcripts.gtf";
+    private String remove="";
     private String annot="genes.gtf";
     private String reference="hg19.fa";
     private String dir="";
@@ -36,10 +37,16 @@ public class LncRNAFinder {
         dir=workDir;
     }
     
-    public List getTrainSequences(String refGTF, String refFA, boolean filter) throws IOException {
+    public List getTrainSequences(String refGTF, String refFA, GTF annotation) throws IOException {
         reference=refFA;
         annot=refGTF;
-        return getTrainSequences(filter);
+        return getTrainSequences(false, annotation);
+    }
+    
+    public List getTrainSequences(String refGTF, String refFA, boolean filter, GTF annotation) throws IOException {
+        reference=refFA;
+        annot=refGTF;
+        return getTrainSequences(filter, annotation);
     }
     
     public List getTrainSequences(String refGTF, String refFA) throws IOException {
@@ -59,15 +66,19 @@ public class LncRNAFinder {
     }
     
     public List getTrainSequences() throws IOException {
-        return getTrainSequences(true);
+        return getTrainSequences(false);
     }
     
     public List getTrainSequences(boolean sizeFilter) throws IOException {
+        return getTrainSequences(sizeFilter, null);
+    }
+    
+    public List getTrainSequences(boolean sizeFilter, GTF exist_annot) throws IOException {
         GTFManager gm = new GTFManager();
         gm.setFile(dir+"/"+annot);
         gm.FILTER_SIZE=sizeFilter;
         System.out.print("Reading annotation: "+annot+"...");
-        GTF annotation = gm.read();
+        GTF annotation = gm.read(exist_annot);
         System.out.println("done. Total "+annotation.getSize()+" transcripts.");
         System.out.print("Retrieving sequences for "+annotation.getSize()+" transcripts...");
         annotation.reference=dir+"/"+reference;

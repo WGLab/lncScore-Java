@@ -53,6 +53,7 @@ public class Runner {
         boolean GET_COUNT=false;
         boolean GET_FREQ=false;
         boolean GET_INPUT=false;
+        boolean FILTER=false;
         boolean CONVERT=false;
         boolean FILLED=false;
         boolean FORMAT_LIBSVM=true;
@@ -74,7 +75,7 @@ if (args[i].equals("--size")) SIZE=true;                           // Temporary 
                 
                 if (args[i].equals("-i") && i<args.length-1) inputGTF = args[i+1];
                 if (args[i].equals("-d") && i<args.length-1) dir = args[i+1];
-                if (args[i].equals("-g") && i<args.length-1) refGTF = args[i+1];
+                if (args[i].equals("-g") && i<args.length-1) { refGTF = args[i+1]; FILTER=true; }
                 if (args[i].equals("-f") && i<args.length-1) refFasta = args[i+1];
                 if (args[i].equals("-s") && i<args.length-1) inputSeq = args[i+1];
                 if (args[i].equals("-o") && i<args.length-1) output = args[i+1];
@@ -165,7 +166,7 @@ if (SIZE) {
                 fr.close();
             }
             
-            if (GET_SEQ) generateTrainSet(dir, inputGTF, refFasta, lncRNA, inputSeq);
+            if (GET_SEQ) generateTrainSet(dir, inputGTF, refFasta, lncRNA, inputSeq, refGTF, FILTER);
             else if (GET_COUNT || GET_FREQ || GET_INPUT) {
                 /// CHECK TRAINSET FIRST!!
                 Map feat = new HashMap();
@@ -367,9 +368,17 @@ if (SIZE) {
         }
     }
     
-    public static void generateTrainSet(String dir, String inputGTF, String refFasta, LncRNAFinder lncRNA, String inputSeq) throws IOException {
+    public static void generateTrainSet(String dir, String inputGTF, String refFasta, LncRNAFinder lncRNA, String inputSeq, String refGTF, boolean filter) throws IOException {
+        GTF annotation = null;
+        if (filter) {
+            GTFManager gm = new GTFManager();
+            gm.setFile(dir+"/"+refGTF);
+            System.out.print("Reading exist annotation: "+refGTF+"...");
+            annotation = gm.read();
+        }
+        
         lncRNA = new LncRNAFinder(dir);
-        List trainset = lncRNA.getTrainSequences(inputGTF, refFasta, false);
+        List trainset = lncRNA.getTrainSequences(inputGTF, refFasta, false, annotation);
         FileWriter fw = new FileWriter(dir+"/"+inputSeq);
         FileWriter fw2 = new FileWriter(dir+"/"+inputSeq+".fa");
         BufferedWriter bw = new BufferedWriter(fw);

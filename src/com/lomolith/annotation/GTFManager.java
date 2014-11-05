@@ -34,6 +34,10 @@ public class GTFManager {
     }
     
     public GTF read() throws FileNotFoundException, IOException {
+        return read(null);
+    }
+    
+    public GTF read(GTF annot) throws FileNotFoundException, IOException {
         GTF gtf = new GTF(filename);
         gtf.FILTER_SIZE=FILTER_SIZE;
         FileReader fr = new FileReader(filename);
@@ -52,6 +56,12 @@ if (cnt!=gtf.transcripts.size()&&!diff) {System.out.println(cnt+"/"+gtf.transcri
         TOTAL=cnt;
         br.close();
         fr.close();
+        
+        if (annot!=null) {
+            System.out.print("Removing known transcripts from "+gtf.getSize()+"...");
+            gtf=exclude(gtf, annot);
+            System.out.println("done. "+gtf.getSize()+" transcripts remain");
+        }
         return gtf;
     }
     
