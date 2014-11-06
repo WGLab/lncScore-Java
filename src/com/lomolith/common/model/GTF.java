@@ -66,7 +66,7 @@ public class GTF {
         return returnValue;
     }
     
-    public void setTranscript(String line) {                                    // Currently, it ignores duplicates of transcript ID.
+    public void setTranscript(String line, GTF annot) {                                    // Currently, it ignores duplicates of transcript ID.
         String[] cols=line.split("\t");
         if (cols[2].equals("gene")||cols[2].equals("transcript")) {
             Transcript t = new Transcript();
@@ -74,6 +74,7 @@ public class GTF {
             t.start=Long.parseLong(cols[3]);
             t.end=Long.parseLong(cols[4]);
             if (t.chr.indexOf("_")==-1) {
+                if (annot!=null && annot.overlap(t)) break; 
                 if ((t.end-t.start+1>200 && FILTER_SIZE) || !FILTER_SIZE) {
                     t.method=cols[1];
                     t.type=cols[2];
@@ -110,6 +111,15 @@ public class GTF {
                 }
             }
         }
+    }
+    
+    public boolean overlap(Transcript t) {
+        boolean returnValue=false;
+        for (int i=0; i<transcripts.size(); i++) {
+            Transcript tc = (Transcript) transcripts.get(i);
+            if (tc.chr.equals(t.chr) && tc.start<=t.end && tc.end>=t.start) { returnValue=true; break; }
+        }
+        return returnValue;
     }
     
     public List getTranscripts() {

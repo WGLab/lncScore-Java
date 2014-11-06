@@ -79,7 +79,7 @@ public class LncRNAFinder {
         gm.FILTER_SIZE=sizeFilter;
         System.out.print("Reading annotation: "+annot+"...");
         GTF annotation = gm.read(exist_annot);
-        System.out.println("done. Total "+annotation.getSize()+" transcripts.");
+        //System.out.println("done. Total "+annotation.getSize()+" transcripts.");
         System.out.print("Retrieving sequences for "+annotation.getSize()+" transcripts...");
         annotation.reference=dir+"/"+reference;
         annotation.getSeq();

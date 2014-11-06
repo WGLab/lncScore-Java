@@ -44,24 +44,27 @@ public class GTFManager {
         BufferedReader br = new BufferedReader(fr);
         String line="";
         int cnt=0;        
-boolean diff=false;        
+//boolean diff=false;        
         while ((line=br.readLine())!=null) {
             if (!line.startsWith("#")) {
-                gtf.setTranscript(line);
+                gtf.setTranscript(line, annot);
                 cnt++;
-if (cnt!=gtf.transcripts.size()&&!diff) {System.out.println(cnt+"/"+gtf.transcripts.size()); diff=true;}
+if (cnt%10000==0)System.out.print(".");                
+//if (cnt!=gtf.transcripts.size()&&!diff) {System.out.println(cnt+"/"+gtf.transcripts.size()); diff=true;}
             }
         }
+System.out.println("done");        
         gtf.sortTranscripts();
         TOTAL=cnt;
         br.close();
         fr.close();
         
-        if (annot!=null) {
-            System.out.print("Removing known transcripts from "+gtf.getSize()+"...");
-            gtf=exclude(gtf, annot);
-            System.out.println("done. "+gtf.getSize()+" transcripts remain");
-        }
+//        if (annot!=null) {
+//            System.out.print("Removing known transcripts from "+gtf.getSize()+"...");
+//            gtf=exclude(gtf, annot);
+//            System.out.println("done. "+gtf.getSize()+" transcripts remain");
+//        }
+//        else System.out.println("Total "+gtf.getSize()+" transcripts");
         return gtf;
     }
     
