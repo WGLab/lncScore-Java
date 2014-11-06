@@ -375,6 +375,7 @@ if (SIZE) {
             gm.setFile(dir+"/"+refGTF);
             System.out.print("Reading exist annotation: "+refGTF+"...");
             annotation = gm.read();
+            System.out.println("done.");
         }
         
         lncRNA = new LncRNAFinder(dir);
