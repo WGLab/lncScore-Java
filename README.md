@@ -1,4 +1,4 @@
-# lncscore: identification of lncRNA from RNA-Seq data
+# Identification of novel lncRNA from RNA-Seq data
 
 lncScore is a Java-based software tool for predicting novel lncRNA directly from assembled isoforms of RNA-Seq data sets. We use a machine learning technique to integrate multiple sources of information that are predictive of lncRNA, and assess whether a given transcript is likely to be a novel lncRNA from RNA-Seq data.
 
